@@ -104,8 +104,8 @@
         }
         
         .card-place {
-            width: 250px;
-            height: 350px;
+            width: 280px;
+            height: 380px;
             background: linear-gradient(145deg, #4a3224, #2f1f16);
             border: 3px solid #b68b6e;
             border-radius: 15px;
@@ -113,8 +113,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2em;
-            color: #b68b6e;
             box-shadow: 0 10px 0 #3a261d, inset 0 0 20px rgba(0,0,0,0.8);
             position: relative;
             transition: all 0.3s;
@@ -178,13 +176,14 @@
             border-radius: 10px;
             color: #d4a574;
             border: 1px solid #b68b6e;
+            min-height: 70px;
         }
         
         @media (max-width: 600px) {
             h1 { font-size: 1.8em; }
             .category { min-width: 100px; padding: 12px 15px; font-size: 1em; }
             .draw-btn { font-size: 1.2em; padding: 15px 25px; }
-            .card-place { width: 200px; height: 280px; }
+            .card-place { width: 220px; height: 300px; }
             .placeholder { font-size: 2em; }
         }
     </style>
@@ -219,6 +218,7 @@
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
+        // Получаем элементы
         const drawBtn = document.getElementById('draw-card-btn');
         const cardSlot = document.getElementById('card-slot');
         const cardImage = document.getElementById('card-image');
@@ -229,41 +229,61 @@
         const sposobBtn = document.getElementById('category-sposob');
 
         let currentCardId = null;
+        let currentCardUrl = null;
 
+        // Инициализация Telegram
         const tg = window.Telegram?.WebApp;
         if (tg) {
             tg.ready();
             tg.expand();
+            console.log('Telegram Mini App инициализирован');
             
             // Слушаем данные от бота
-            tg.onEvent('webAppData', (data) => {
-                const response = JSON.parse(data.data);
-                if (response.action === 'card_received') {
-                    // Бот прислал картинку
-                    currentCardId = response.card_id;
-                    cardImage.src = response.url;
-                    cardSlot.classList.add('has-card');
-                    messageArea.textContent = `🎴 Вытянута улика! Выбери категорию.`;
+            tg.onEvent('webAppData', function(data) {
+                console.log('Получены данные от бота:', data);
+                try {
+                    const response = JSON.parse(data.data);
+                    console.log('Разобранные данные:', response);
+                    
+                    if (response.action === 'card_received') {
+                        // Бот прислал картинку
+                        currentCardId = response.card_id;
+                        currentCardUrl = response.url;
+                        
+                        // Показываем картинку
+                        cardImage.src = currentCardUrl;
+                        cardSlot.classList.add('has-card');
+                        messageArea.textContent = `🎴 Вытянута улика! Выбери категорию.`;
+                    } else if (response.action === 'card_placed') {
+                        // Карта успешно отправлена
+                        messageArea.textContent = `✅ Карта отправлена!`;
+                        cardSlot.classList.remove('has-card');
+                        cardImage.src = '';
+                        currentCardId = null;
+                    }
+                } catch (e) {
+                    console.error('Ошибка при обработке данных:', e);
                 }
             });
+        } else {
+            console.log('Запуск вне Telegram');
         }
 
-        drawBtn.addEventListener('click', () => {
-            // Просим бота дать случайную картинку
+        // Кнопка "Взять улику"
+        drawBtn.addEventListener('click', function() {
             if (tg) {
+                // Отправляем запрос боту
                 tg.sendData(JSON.stringify({
                     action: 'get_card'
                 }));
                 messageArea.textContent = '🔄 Ищем улику...';
             } else {
+                // Режим разработки
                 alert('Тест: запрос картинки (работает только в Telegram)');
-                // Для теста в браузере показываем пример
-                cardImage.src = 'https://via.placeholder.com/250x350?text=Улика';
-                cardSlot.classList.add('has-card');
-                messageArea.textContent = '🎴 Тестовая улика';
             }
         });
 
+        // Отправка карты в категорию
         function sendToBot(category) {
             if (!currentCardId) {
                 alert('Сначала нужно взять улику!');
@@ -273,23 +293,28 @@
             const data = {
                 action: 'place_card',
                 category: category,
-                card_id: currentCardId
+                card_id: currentCardId,
+                card_url: currentCardUrl
             };
 
             if (tg) {
                 tg.sendData(JSON.stringify(data));
-                messageArea.textContent = `✅ Карта отправлена в ${category}!`;
-                cardSlot.classList.remove('has-card');
-                cardImage.src = '';
-                currentCardId = null;
+                messageArea.textContent = `📤 Отправляем в ${category}...`;
             } else {
                 alert(`[Тест] Отправлено в ${category}`);
             }
         }
 
-        motivBtn.addEventListener('click', () => sendToBot('МОТИВ'));
-        mestoBtn.addEventListener('click', () => sendToBot('МЕСТО'));
-        sposobBtn.addEventListener('click', () => sendToBot('СПОСОБ'));
+        // Обработчики для кнопок категорий
+        motivBtn.addEventListener('click', function() { sendToBot('МОТИВ'); });
+        mestoBtn.addEventListener('click', function() { sendToBot('МЕСТО'); });
+        sposobBtn.addEventListener('click', function() { sendToBot('СПОСОБ'); });
+
+        // Сообщаем боту, что приложение готово
+        if (tg) {
+            tg.ready();
+        }
     </script>
 </body>
 </html>
+       
