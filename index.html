@@ -242,7 +242,7 @@
             tg.onEvent('webAppData', function(data) {
                 console.log('Получены данные от бота:', data);
                 try {
-                    const response = JSON.parse(data.data);
+                    const response = JSON.parse(data);
                     console.log('Разобранные данные:', response);
                     
                     if (response.action === 'card_received') {
@@ -260,9 +260,13 @@
                         cardSlot.classList.remove('has-card');
                         cardImage.src = '';
                         currentCardId = null;
+                    } else if (response.action === 'error') {
+                        // Ошибка от бота
+                        messageArea.textContent = response.message;
                     }
                 } catch (e) {
                     console.error('Ошибка при обработке данных:', e);
+                    messageArea.textContent = '❌ Ошибка получения данных';
                 }
             });
         } else {
@@ -278,7 +282,6 @@
                 }));
                 messageArea.textContent = '🔄 Ищем улику...';
             } else {
-                // Режим разработки
                 alert('Тест: запрос картинки (работает только в Telegram)');
             }
         });
