@@ -21,7 +21,7 @@
             padding: 20px;
         }
         .game-container {
-            max-width: 800px;
+            max-width: 600px;
             width: 100%;
             background: rgba(44, 26, 18, 0.9);
             border: 3px solid #b68b6e;
@@ -39,14 +39,23 @@
             cursor: pointer;
             margin: 20px 0;
         }
-        img {
-            max-width: 100%;
+        .card-place {
+            width: 280px;
+            height: 380px;
+            margin: 20px auto;
+            background: #2f1f16;
+            border: 3px solid #b68b6e;
             border-radius: 15px;
-            margin: 20px 0;
-        }
-        #card-place {
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 80px;
-            margin: 20px 0;
+        }
+        .card-place img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 12px;
         }
         .message-area {
             margin-top: 20px;
@@ -59,8 +68,8 @@
 <body>
     <div class="game-container">
         <h1>🕯️ СТОЛ УЛИК 🕯️</h1>
-        <div id="card-area">
-            <div id="card-place">🃏</div>
+        <div class="card-place" id="card-place">
+            <div id="placeholder">🃏</div>
             <img id="card-image" style="display:none">
         </div>
         <button id="draw-card">🎴 Взять улику</button>
@@ -73,30 +82,31 @@
         if (tg) {
             tg.ready();
             tg.expand();
-            console.log('Telegram Mini App инициализирован');
+            console.log('Mini App инициализирован');
         }
 
         const drawBtn = document.getElementById('draw-card');
-        const cardPlace = document.getElementById('card-place');
+        const placeholder = document.getElementById('placeholder');
         const cardImage = document.getElementById('card-image');
         const messageArea = document.getElementById('message');
 
         drawBtn.addEventListener('click', function() {
             if (!tg) {
-                messageArea.textContent = '❌ Это приложение должно работать внутри Telegram';
+                messageArea.textContent = '❌ Открой через Telegram';
                 return;
             }
-            messageArea.textContent = '🔄 Ищем улику...';
+            messageArea.textContent = '🔄 Ищу улику...';
             tg.sendData(JSON.stringify({ action: 'get_card' }));
         });
 
         if (tg) {
             tg.onEvent('webAppData', function(data) {
-                console.log('Получено от бота:', data);
+                console.log('Ответ от бота:', data);
                 try {
                     const response = JSON.parse(data);
                     if (response.action === 'card_received') {
-                        cardPlace.style.display = 'none';
+                        // Показываем картинку
+                        placeholder.style.display = 'none';
                         cardImage.src = response.url;
                         cardImage.style.display = 'block';
                         messageArea.textContent = '🎴 Улика получена!';
