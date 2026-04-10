@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Письма Призрака — Стол улик</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Georgia', serif;
+            background-color: #1a0f0a;
+            color: #e8d5b5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .game-container {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(44, 26, 18, 0.9);
+            border: 3px solid #b68b6e;
+            border-radius: 30px;
+            padding: 30px;
+            text-align: center;
+        }
+        button {
+            background: #8b6f50;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            color: white;
+            cursor: pointer;
+            margin: 20px 0;
+        }
+        img {
+            max-width: 100%;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+        #card-place {
+            font-size: 80px;
+            margin: 20px 0;
+        }
+        .message-area {
+            margin-top: 20px;
+            padding: 10px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🕯️ СТОЛ УЛИК 🕯️</h1>
+        <div id="card-area">
+            <div id="card-place">🃏</div>
+            <img id="card-image" style="display:none">
+        </div>
+        <button id="draw-card">🎴 Взять улику</button>
+        <div class="message-area" id="message">Нажми на кнопку, чтобы вытянуть улику</div>
+    </div>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.ready();
+            tg.expand();
+            console.log('Telegram Mini App инициализирован');
+        }
+
+        const drawBtn = document.getElementById('draw-card');
+        const cardPlace = document.getElementById('card-place');
+        const cardImage = document.getElementById('card-image');
+        const messageArea = document.getElementById('message');
+
+        drawBtn.addEventListener('click', function() {
+            if (!tg) {
+                messageArea.textContent = '❌ Это приложение должно работать внутри Telegram';
+                return;
+            }
+            messageArea.textContent = '🔄 Ищем улику...';
+            tg.sendData(JSON.stringify({ action: 'get_card' }));
+        });
+
+        if (tg) {
+            tg.onEvent('webAppData', function(data) {
+                console.log('Получено от бота:', data);
+                try {
+                    const response = JSON.parse(data);
+                    if (response.action === 'card_received') {
+                        cardPlace.style.display = 'none';
+                        cardImage.src = response.url;
+                        cardImage.style.display = 'block';
+                        messageArea.textContent = '🎴 Улика получена!';
+                    } else if (response.action === 'error') {
+                        messageArea.textContent = '❌ ' + response.message;
+                    }
+                } catch (e) {
+                    console.error('Ошибка:', e);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
