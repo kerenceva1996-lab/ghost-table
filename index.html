@@ -78,16 +78,11 @@
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
-        let tg = null;
-        
-        // Инициализация Telegram WebApp
-        if (window.Telegram && window.Telegram.WebApp) {
-            tg = window.Telegram.WebApp;
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
             tg.ready();
             tg.expand();
-            console.log('✅ Telegram Mini App инициализирован');
-        } else {
-            console.log('⚠️ Запуск вне Telegram');
+            console.log('Mini App готов');
         }
 
         const drawBtn = document.getElementById('draw-card');
@@ -95,36 +90,30 @@
         const cardImage = document.getElementById('card-image');
         const messageArea = document.getElementById('message');
 
-        drawBtn.addEventListener('click', function() {
+        drawBtn.addEventListener('click', () => {
             if (!tg) {
-                messageArea.textContent = '❌ Это приложение должно работать внутри Telegram';
+                messageArea.innerText = '❌ Открой через Telegram';
                 return;
             }
-            
-            messageArea.textContent = '🔄 Ищем улику...';
-            const data = JSON.stringify({ action: 'get_card' });
-            console.log('📤 Отправляем:', data);
-            tg.sendData(data);
+            messageArea.innerText = '🔄 Ищу улику...';
+            tg.sendData(JSON.stringify({ action: 'get_card' }));
         });
 
         if (tg) {
-            tg.onEvent('webAppData', function(data) {
-                console.log('📥 Ответ от бота:', data);
+            tg.onEvent('webAppData', (data) => {
+                console.log('Ответ:', data);
                 try {
-                    const response = JSON.parse(data);
-                    console.log('📦 Разобранный ответ:', response);
-                    
-                    if (response.action === 'card_received') {
+                    const res = JSON.parse(data);
+                    if (res.action === 'card_received') {
                         placeholder.style.display = 'none';
-                        cardImage.src = response.url;
+                        cardImage.src = res.url;
                         cardImage.style.display = 'block';
-                        messageArea.textContent = '🎴 Улика получена!';
-                    } else if (response.action === 'error') {
-                        messageArea.textContent = '❌ ' + response.message;
+                        messageArea.innerText = '🎴 Улика получена!';
+                    } else if (res.action === 'error') {
+                        messageArea.innerText = '❌ ' + res.message;
                     }
-                } catch (e) {
-                    console.error('❌ Ошибка при обработке:', e);
-                    messageArea.textContent = '❌ Ошибка получения улики';
+                } catch(e) {
+                    console.error('Ошибка', e);
                 }
             });
         }
